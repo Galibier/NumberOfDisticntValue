@@ -4,7 +4,9 @@ public class HyperLogLog {
 
     public static final int AMOUNT_OF_REGISTERS = 16384;
     public static final int HLL_P_MASK = 16383;
+    private byte registersForCount[] = new byte[AMOUNT_OF_REGISTERS];
 
+    /*
     public static int evaluationOfDistinctValue(byte[][] InputData){
         byte registersForCount[] = new byte[AMOUNT_OF_REGISTERS];
         int distinctValue;
@@ -19,16 +21,15 @@ public class HyperLogLog {
 
         return distinctValue;
     }
+    */
 
     /**
      * fill the registers according to the hash code the single data generate
      *
-     * @param hashCodeOfSingleData  hash code one single data generate
-     *
-     * @param RegistersForCount  registers for counting the first bit of ones
+     * @param inputSingleValue
      */
-
-    public static void hyperLogLogAddRegisters(long hashCodeOfSingleData, byte[] RegistersForCount){
+    public void hyperLogLogAddData(byte[] inputSingleValue){
+        long hashCodeOfSingleData = MurmurHash.hash64(inputSingleValue);
         int index = (int)(hashCodeOfSingleData & HLL_P_MASK);
         hashCodeOfSingleData |= ((long)1 << 63); /* Make sure the loop terminates. hashCode is all 0*/
         long bit = AMOUNT_OF_REGISTERS; /* First bit not used to address the register. */
@@ -39,19 +40,17 @@ public class HyperLogLog {
             bit <<= 1;
         }
 
-        if(RegistersForCount[index] < firstBitOfOne)
-            RegistersForCount[index] = firstBitOfOne;
+        if(registersForCount[index] < firstBitOfOne)
+            registersForCount[index] = firstBitOfOne;
     }
 
     /**
      * Return the approximated distinct value of the set based on the armonic
      * mean of the registers values.
      *
-     * @param RegistersForCount  registers count the first bit of one
-     *
      * @return 64 bit hash of the given string
      */
-    public static int hyperLogLogCount(byte[] RegistersForCount) {
+    public int hyperLogLogCount() {
         double amountOfRegisters = AMOUNT_OF_REGISTERS;
         double E = 0, alpha = 0.7213 / (1 + 1.079 / amountOfRegisters);
         int j, RegistersOfZero = 0; /* Number of registers equal to 0. */
@@ -66,7 +65,7 @@ public class HyperLogLog {
         }
 
         /* Compute SUM(2^-register[0..i]). */
-        for (byte n : RegistersForCount) {
+        for (byte n : registersForCount) {
             E += preComputeForEvaluation[n];
             if (n == 0)
                 RegistersOfZero++;
@@ -100,6 +99,37 @@ public class HyperLogLog {
     }
 
     public static void main(String[] args) {
+
+        final int countOfFields = 6;
+        final int singleValueSize = 12;
+        byte[][] testData = new byte[countOfFields][];
+        HyperLogLog[] evaluationOfDistinctValue = new HyperLogLog[countOfFields];
+        for (int i=0; i<countOfFields; i++)
+            evaluationOfDistinctValue[i] = new HyperLogLog();
+        HashSet[] hs = new HashSet[countOfFields];
+        for (int i=0; i<countOfFields; i++)
+            hs[i] = new HashSet();
+
+        for (int i=0; i<1000000; i++){
+            for (int n = 0; n < countOfFields; n++) {
+                int len = (int) (Math.random() * singleValueSize);
+                //System.out.println(len);
+                testData[n] = new byte[len];
+                for (int j = 0; j < len; j++) {
+                    testData[n][j] = (byte) (Math.random() * 12354791);
+                }
+                hs[n].add(MurmurHash.hash64(testData[n]));
+                evaluationOfDistinctValue[n].hyperLogLogAddData(testData[n]);
+            }
+        }
+        for (int n = 0; n < countOfFields; n++){
+            System.out.print(hs[n].size());
+            System.out.print(">>>>");
+            System.out.println(evaluationOfDistinctValue[n].hyperLogLogCount());
+        }
+
+
+
         /*
             Some Testing Example may output like this:
             lengthOfSingleData: 21 >>> ActualCount: 896293  Evaluation: 903195     time：31 ms    bias: 0.77%
@@ -115,6 +145,7 @@ public class HyperLogLog {
          */
         
         /*can be change to test different amount of data*/
+        /*
         int amountOfData = 1000000;
         int maxSingleDataLength = 128;
 
@@ -141,5 +172,6 @@ public class HyperLogLog {
             System.out.printf("   time：%d ms ", (endTime-startTime));
             System.out.printf("   bias: %.2f%%\n", 100*(evaluationOfDistinctValues-hs.size())/(double)hs.size());
         }
+        */
     }
 }
