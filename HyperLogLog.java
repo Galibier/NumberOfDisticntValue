@@ -2,8 +2,8 @@ import java.util.HashSet;
 
 public class HyperLogLog {
 
-    public static final int AMOUNT_OF_REGISTERS = 16384;
-    public static final int HLL_P_MASK = 16383;
+    private static final int AMOUNT_OF_REGISTERS = 16384;
+    private static final int HLL_P_MASK = 16383;
     private byte registersForCount[] = new byte[AMOUNT_OF_REGISTERS];
 
     /*
@@ -28,7 +28,7 @@ public class HyperLogLog {
      *
      * @param inputSingleValue
      */
-    public void hyperLogLogAddData(byte[] inputSingleValue){
+    public void addData(byte[] inputSingleValue){
         long hashCodeOfSingleData = MurmurHash.hash64(inputSingleValue);
         int index = (int)(hashCodeOfSingleData & HLL_P_MASK);
         hashCodeOfSingleData |= ((long)1 << 63); /* Make sure the loop terminates. hashCode is all 0*/
@@ -50,7 +50,7 @@ public class HyperLogLog {
      *
      * @return 64 bit hash of the given string
      */
-    public int hyperLogLogCount() {
+    public int getEvaluationResult() {
         double amountOfRegisters = AMOUNT_OF_REGISTERS;
         double E = 0, alpha = 0.7213 / (1 + 1.079 / amountOfRegisters);
         int j, RegistersOfZero = 0; /* Number of registers equal to 0. */
@@ -99,7 +99,7 @@ public class HyperLogLog {
     }
 
     public static void main(String[] args) {
-
+    /*
         final int countOfFields = 6;
         final int singleValueSize = 12;
         byte[][] testData = new byte[countOfFields][];
@@ -119,15 +119,14 @@ public class HyperLogLog {
                     testData[n][j] = (byte) (Math.random() * 12354791);
                 }
                 hs[n].add(MurmurHash.hash64(testData[n]));
-                evaluationOfDistinctValue[n].hyperLogLogAddData(testData[n]);
+                evaluationOfDistinctValue[n].addData(testData[n]);
             }
         }
         for (int n = 0; n < countOfFields; n++){
             System.out.print(hs[n].size());
             System.out.print(">>>>");
-            System.out.println(evaluationOfDistinctValue[n].hyperLogLogCount());
-        }
-
+            System.out.println(evaluationOfDistinctValue[n].getEvaluationResult());
+        }*/
 
 
         /*
