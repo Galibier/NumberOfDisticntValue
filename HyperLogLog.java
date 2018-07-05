@@ -4,7 +4,7 @@ public class HyperLogLog {
 
     private static final int AMOUNT_OF_REGISTERS = 16384;
     private static final int HLL_P_MASK = 16383;
-    private byte registersForCount[] = new byte[AMOUNT_OF_REGISTERS];
+    private byte[] registersForCount = new byte[AMOUNT_OF_REGISTERS];
 
     /*
     public static int evaluationOfDistinctValue(byte[][] InputData){
@@ -31,8 +31,10 @@ public class HyperLogLog {
     public void addData(byte[] inputSingleValue){
         long hashCodeOfSingleData = MurmurHash.hash64(inputSingleValue);
         int index = (int)(hashCodeOfSingleData & HLL_P_MASK);
-        hashCodeOfSingleData |= ((long)1 << 63); /* Make sure the loop terminates. hashCode is all 0*/
-        long bit = AMOUNT_OF_REGISTERS; /* First bit not used to address the register. */
+        /* Make sure the loop terminates. hashCode is all 0*/
+        hashCodeOfSingleData |= ((long)1 << 63);
+        /* First bit not used to address the register. */
+        long bit = AMOUNT_OF_REGISTERS;
         byte firstBitOfOne = 1;
 
         while ((hashCodeOfSingleData & bit) == 0) {
@@ -40,8 +42,9 @@ public class HyperLogLog {
             bit <<= 1;
         }
 
-        if(registersForCount[index] < firstBitOfOne)
+        if(registersForCount[index] < firstBitOfOne) {
             registersForCount[index] = firstBitOfOne;
+        }
     }
 
     /**
@@ -53,7 +56,8 @@ public class HyperLogLog {
     public int getEvaluationResult() {
         double amountOfRegisters = AMOUNT_OF_REGISTERS;
         double E = 0, alpha = 0.7213 / (1 + 1.079 / amountOfRegisters);
-        int j, RegistersOfZero = 0; /* Number of registers equal to 0. */
+        /* Number of registers equal to 0. */
+        int j, RegistersOfZero = 0;
 
         /* We precompute 2^(-reg[j]) in a small table in order to
          * speedup the computation of SUM(2^-register[0..i]). */
@@ -67,8 +71,9 @@ public class HyperLogLog {
         /* Compute SUM(2^-register[0..i]). */
         for (byte n : registersForCount) {
             E += preComputeForEvaluation[n];
-            if (n == 0)
+            if (n == 0) {
                 RegistersOfZero++;
+            }
         }
 
         /* Muliply the inverse of E for alpha_m * m^2 to have the raw estimate. */
@@ -80,7 +85,8 @@ public class HyperLogLog {
          * shows a strong bias in the range 2.5*16384 - 72000, so we try to
          * compensate for it. */
         if (E < amountOfRegisters*2.5 && RegistersOfZero != 0) {
-            E = amountOfRegisters * Math.log(amountOfRegisters / RegistersOfZero); /* LINEARCOUNTING() */
+            /* LINEARCOUNTING() */
+            E = amountOfRegisters * Math.log(amountOfRegisters / RegistersOfZero);
         }
         else if (amountOfRegisters == 16384 && E < 72000) {
             /* We did polynomial regression of the bias for this range, this

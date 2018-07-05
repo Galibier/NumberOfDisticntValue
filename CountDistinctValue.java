@@ -1,4 +1,3 @@
-import java.lang.reflect.Field;
 import java.util.HashSet;
 
 public class CountDistinctValue {
@@ -15,8 +14,9 @@ public class CountDistinctValue {
     }
 
     public void addSingleData(byte[][] inputSingleData){
-        if (inputSingleData.length != countOfField)
+        if (inputSingleData.length != countOfField) {
             return;
+        }
 
         for (int i=0; i<countOfField; i++){
             evaluationOfDistinctValue[i].addData(inputSingleData[i]);
@@ -36,19 +36,19 @@ public class CountDistinctValue {
     public static void main(String[] args) {
 
         final int countOfFields = 8;
-        final int singleValueSize = 4;
+        final int singleValueSize = 8;
 
         CountDistinctValue res = new CountDistinctValue(countOfFields);
         byte[][] testData = new byte[countOfFields][];
 
         HashSet[] hs = new HashSet[countOfFields];
-        for (int i=0; i<countOfFields; i++)
+        for (int i=0; i<countOfFields; i++) {
             hs[i] = new HashSet();
+        }
 
         for (int i=0; i<1000000; i++){
             for (int n = 0; n < countOfFields; n++) {
                 int len = singleValueSize;
-                //System.out.println(len);
                 testData[n] = new byte[len];
                 for (int j = 0; j < len; j++) {
                     testData[n][j] = (byte) (Math.random() * 12354791);
@@ -61,7 +61,7 @@ public class CountDistinctValue {
         int[] distinctValue = res.getDistinctValue();
 
         for (int n = 0; n < countOfFields; n++){
-            System.out.printf("Field1 == Actual: %d", hs[n].size());
+            System.out.printf("Field == Actual: %d", hs[n].size());
             System.out.printf(" --- Evaluation: %d", distinctValue[n]);
             System.out.printf(" --- bias: %2f%%\n", (double)(hs[n].size()-distinctValue[n])/hs[n].size()*100.0);
         }
